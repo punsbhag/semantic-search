@@ -34,8 +34,10 @@
     async function performSearch() {
       const query = document.getElementById("queryInput").value;
 
-      const response = await fetch("https://elastic-sac-test.elkaas.flex.com:443/elser*/_search", {
+      const response = await fetch("https://elastic-sac-test.elkaas.flex.com:443/elser-test-logs-temp/_search", {
         method: "POST",
+        mode: "cors",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           "Authorization": "ApiKey QmlWQ0twb0JBNWVpMEVQSmEyY1U6WUhjTGpDVXZuNjZ4dVRVSGJJY2tZUQ=="
