@@ -1,1 +1,101 @@
-empty
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Semantic Search with ELSER and Kibana Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f9f9f9;
+        }
+        h2 {
+            color: #333;
+        }
+        #search-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #query {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #eef;
+            border-radius: 6px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Semantic Search with ELSER</h2>
+    <div id="search-container">
+        <input type="text" id="query" placeholder="Type your question in plain English" />
+        <button onclick="performSearch()">Search</button>
+        <div id="results"></div>
+    </div>
+
+    <iframe src="https://kibana-sac-test.elkaas.flex.com/app/dashboards#/view/af060269-6f9b-47a0-9ac8-65bc5006d679?embed=true&_g=(refreshInterval:(pause:!t,value:60000),time:(from:now-15m,to:now))"></iframe>
+
+    <script>
+        async function performSearch() {
+            const queryText = document.getElementById('query').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = "Searching...";
+
+            try {
+                const response = await fetch('https://elastic-sac-test.elkaas.flex.com/elser-test-logs-sparse/_search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'ApiKey QmlWQ0twb0JBNWVpMEVQSmEyY1U6WUhjTGpDVXZuNjZ4dVRVSGJJY2tZUQ=='
+                    },
+                    body: JSON.stringify({
+                        size: 10,
+                        _source: ["message"],
+                        query: {
+                            sparse_vector: {
+                                field: "message_embedding",
+                                inference_id: ".elser_model_2",
+                                query: queryText
+                            }
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    resultsDiv.innerHTML = `<p>Error: ${response.status} ${response.statusText}</p>`;
+                    return;
+                }
+
+                const data = await response.json();
+                const hits = data.hits.hits;
+                if (hits.length === 0) {
+                    resultsDiv.innerHTML = "<p>No results found.</p>";
+                } else {
+                    resultsDiv.innerHTML = "<h3>Results:</h3>" + hits.map(hit => `<p>${hit._source.message}</p>`).join('');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p>Request failed: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
